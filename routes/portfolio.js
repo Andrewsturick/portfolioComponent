@@ -53,6 +53,7 @@ router.put('/', function(req, res){
   var options = {};
   var myPortfolio = [];
   var headers;
+  var masterObj = {}
     split.map(function(line, i, arr){
       if (line == "Equities"){
         var thisSecurity =line;
@@ -78,10 +79,11 @@ router.put('/', function(req, res){
           }
           myPortfolio.push(thisPosition)
         }
-        var obj = {};
-        obj.name = "Andrew Sturick"
-        obj.currentPortfolio.equities = {};
-        obj.currentPortfolio.equities=myPortfolio
+
+        masterObj.name = "Andrew Sturick"
+        masterObj.currentPortfolio = {}
+        masterObj.currentPortfolio.equities = {};
+        masterObj.currentPortfolio.equities=myPortfolio
         // Portfolio.create(obj, function(err, portfolio){
         // })
       }
@@ -131,10 +133,14 @@ router.put('/', function(req, res){
             optionsPositionsObject[position].totalBP = totals[counter]
             counter++
           }
-          console.log(optionsPositionsObject)
+          masterObj.currentPortfolio.options = {};
+          masterObj.currentPortfolio.options = optionsPositionsObject;
+          console.log(masterObj)
         }
       })
 
+      Portfolio.create(masterObj, function(err, portfolio){
+      })
   });
   res.send(req.body)
 })
