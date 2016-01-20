@@ -10,7 +10,42 @@ router.get('/', function(req, res){
   Portfolio.find({}, function(err, data){
     var obj = {}
     var portfolio = data[0];
-    var body = data[0].currentPortfolio
+    // console.log(data[0].currentPortfolio[0].options,'oooooooooooo')
+    // console.log(data[0].currentPortfolio[0].equities,'eeeeeeeeeeeee')
+
+    var updatedPortfolio = {}
+    updatedPortfolio.currentPortfolio = {}
+    if(data[0].currentPortfolio[0].options){
+      var optionsArr = [];
+      var optionsLength = Object.keys(data[0].currentPortfolio[0].options).length;
+      updatedPortfolio.currentPortfolio.options = []
+      for(var symbol in data[0].currentPortfolio[0].options){
+        var requestObj  = {
+          url: 'https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + symbol +'&expiration=2016-02-19',
+          headers: {
+            Authorization: 'Bearer HVH53upmwGlLuyuc7WytGYxjtcax',
+            Accept: 'application/json'
+          }
+        }
+        request(requestObj, function(error, response, body){
+          // console.log(JSON.parse(body).options.option[0].root_symbol,'kjkjkjkjkjkjkjkj');
+          var symbol = JSON.parse(body).options.option[0].root_symbol;
+          var symbolObj = {};
+          symbolObj.symbol = symbol;
+          // console.log(symbolObj,'sosososo')
+          symbolObj.chain = JSON.parse(body).options.option;
+          // console.log(symbolObj);
+          optionsArr.push(symbolObj)
+          // console.log('')
+          // console.log(optionsArr.length, 'arrLength', 'OL', optionsLength);
+          if(portfolioArr.length == optionsLength){
+            updatedPortfolio.name = 'Andrew Sturick'
+            updatedPortfolio.currentPortfolio.options = optionsArr;
+          }
+        })
+      }
+    }
+    var body = data[0].currentPortfolio[0].equities
     var portfolioSecurities;
     var requestObj
     var portfolioArr = []
@@ -33,10 +68,9 @@ router.get('/', function(req, res){
         symbolObj.chain = JSON.parse(body).options.option;
         portfolioArr.push(symbolObj)
         if(portfolioArr.length == length){
-          var updatedPortfolio = {}
           updatedPortfolio.name = 'Andrew Sturick'
-          updatedPortfolio.currentPortfolio = portfolioArr;
-          console.log(updatedPortfolio);
+          updatedPortfolio.currentPortfolio.equities = portfolioArr;
+          // console.log(updatedPortfolio);
           CurrentPortfolio.update({name:"Andrew Sturick"}, updatedPortfolio, function(err, response2){
             res.send('done')
           })
@@ -104,7 +138,6 @@ router.put('/', function(req, res){
               for(var optionsLine = startingLine; optionsLine < endLine + 1; optionsLine++){
                 if(arr[optionsLine][0]==","){
                   totals.push(arr[optionsLine])
-                  console.log('totals', totals)
                 }
                 if(arr[optionsLine][0]!=","){
                   var thisLine = arr[optionsLine].split(',')
@@ -135,10 +168,8 @@ router.put('/', function(req, res){
           }
           masterObj.currentPortfolio.options = {};
           masterObj.currentPortfolio.options = optionsPositionsObject;
-          console.log(masterObj)
         }
       })
-
       Portfolio.create(masterObj, function(err, portfolio){
       })
   });
