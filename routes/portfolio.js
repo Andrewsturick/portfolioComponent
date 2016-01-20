@@ -2,16 +2,49 @@ var express = require('express')
 var router = express.Router();
 var fs = require('fs')
 var Portfolio = require('../public/models/Portfolio.js')
+var request = require('request')
+var CurrentPortfolio = require('../public/models/CurrentPortfolio')
 
 
 router.get('/', function(req, res){
   Portfolio.find({}, function(err, data){
     var obj = {}
     var portfolio = data[0];
+    var body = data[0].currentPortfolio
+    var portfolioSecurities;
+    var requestObj
+    var portfolioArr = []
+    var length = body.length
+    body.map(function(security, index){
+      var symbol = security.Symbol.toUpperCase()
+      var requestObj  = {
+        url: 'https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + symbol +'&expiration=2016-02-19',
+        headers: {
+          Authorization: 'Bearer HVH53upmwGlLuyuc7WytGYxjtcax',
+          Accept: 'application/json'
+        }
+      }
+      // console.log(requestObj);
+      request(requestObj, function(error, response, body){
 
-    res.send(data[0].currentPortfolio)
-  })
-})
+        var symbol = JSON.parse(body).options.option[0].root_symbol;
+        var symbolObj = {};
+        symbolObj.symbol = symbol;
+        symbolObj.chain = JSON.parse(body).options.option;
+        portfolioArr.push(symbolObj)
+        if(portfolioArr.length == length){
+          var updatedPortfolio = {}
+          updatedPortfolio.name = 'Andrew Sturick'
+          updatedPortfolio.currentPortfolio = portfolioArr;
+          console.log(updatedPortfolio);
+          CurrentPortfolio.update({name:"Andrew Sturick"}, updatedPortfolio, function(err, response2){
+            res.send('done')
+          })
+        }
+      })
+    })
+  })})
+
 router.put('/', function(req, res){
   fs.readFile(req.body.file, 'utf8', function(err, data){
   var split = data.split('\n');
@@ -55,5 +88,8 @@ router.put('/', function(req, res){
   });
   res.send(req.body)
 })
+
+
+
 
 module.exports = router;
