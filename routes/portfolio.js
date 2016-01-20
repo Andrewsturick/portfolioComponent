@@ -54,7 +54,7 @@ router.put('/', function(req, res){
   var myPortfolio = [];
   var headers;
     split.map(function(line, i, arr){
-      if (line == "Equities" || line=="Options"){
+      if (line == "Equities"){
         var thisSecurity =line;
         headers = arr[i+1].split(',');
         for(var a = i; a< 150; a++){
@@ -80,11 +80,61 @@ router.put('/', function(req, res){
         }
         var obj = {};
         obj.name = "Andrew Sturick"
-        obj.currentPortfolio=myPortfolio
-        Portfolio.create(obj, function(err, portfolio){
-        })
+        obj.currentPortfolio.equities = {};
+        obj.currentPortfolio.equities=myPortfolio
+        // Portfolio.create(obj, function(err, portfolio){
+        // })
       }
-    })
+
+      if(line ==="Options"){
+        var optionsPositions = [];
+        optionsPositionsObject = {};
+        var headers = arr[i+1].split(',')
+        var startingLine = i+2;
+        var firstLineOfOptions = arr[startingLine];
+        var totals = []
+        for(var optionsLineIndex = 0 ; optionsLineIndex < 300; optionsLineIndex++){
+          var currentLine = arr[startingLine + optionsLineIndex]
+          var previousLine = arr[startingLine + optionsLineIndex - 1]
+          if(currentLine){
+            if( currentLine[0]==',' &&  previousLine[0]==','){
+              var endLine= optionsLineIndex+ startingLine-1;
+              for(var optionsLine = startingLine; optionsLine < endLine + 1; optionsLine++){
+                if(arr[optionsLine][0]==","){
+                  totals.push(arr[optionsLine])
+                  console.log('totals', totals)
+                }
+                if(arr[optionsLine][0]!=","){
+                  var thisLine = arr[optionsLine].split(',')
+                  var thisPosition = {};
+                  for(header in headers){
+                    if(headers[header]!='Mark Value')
+                    thisPosition[headers[header]] = thisLine[header]
+                  }
+                  // console.log(thisPosition)
+                  optionsPositions.push(thisPosition)
+                };
+              }
+            }
+          }
+          }
+          console.log('totalslog', totals)
+          optionsPositions.map(function(position, i , arr){
+            if(!optionsPositionsObject[position.Symbol]){
+              optionsPositionsObject[position.Symbol] = {};
+              optionsPositionsObject[position.Symbol].positions = []
+            }
+            optionsPositionsObject[position.Symbol].positions.push(position)
+          })
+          var  counter = 0
+          for(position in optionsPositionsObject){
+            optionsPositionsObject[position].totalBP = totals[counter]
+            counter++
+          }
+          console.log(optionsPositionsObject)
+        }
+      })
+
   });
   res.send(req.body)
 })
