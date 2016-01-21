@@ -4,22 +4,27 @@ var fs = require('fs')
 var Portfolio = require('../public/models/Portfolio.js')
 var request = require('request')
 var CurrentPortfolio = require('../public/models/CurrentPortfolio')
+var Firebase = require('firebase')
+var userRef = new Firebase('https://optionsjs.firebaseio.com/users')
+var portRef = new Firebase('https://optionsjs.firebaseio.com/port')
 
+var keyID = 'andrew'
 
 router.get('/', function(req, res){
-  Portfolio.find({}, function(err, data){
-    var obj = {}
-    var portfolio = data[0];
-    // console.log(data[0].currentPortfolio[0].options,'oooooooooooo')
-    // console.log(data[0].currentPortfolio[0].equities,'eeeeeeeeeeeee')
 
+  // get data from firebase
+  userRef.child(keyID).once('value', function(snap){
+    var data = snap.val()
     var updatedPortfolio = {}
     updatedPortfolio.currentPortfolio = {}
-    if(data[0].currentPortfolio[0].options){
+
+
+    if(data.currentPortfolio.options){
+
       var optionsArr = [];
-      var optionsLength = Object.keys(data[0].currentPortfolio[0].options).length;
+      var optionsLength = Object.keys(data.currentPortfolio.options).length;
       updatedPortfolio.currentPortfolio.options = []
-      for(var symbol in data[0].currentPortfolio[0].options){
+      for(var symbol in data.currentPortfolio.options){
         var requestObj  = {
           url: 'https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + symbol +'&expiration=2016-02-19',
           headers: {
@@ -28,11 +33,12 @@ router.get('/', function(req, res){
           }
         }
         request(requestObj, function(error, response, body){
-          // console.log(JSON.parse(body).options.option[0].root_symbol,'kjkjkjkjkjkjkjkj');
+
+          console.log('making options call')
           var symbol = JSON.parse(body).options.option[0].root_symbol;
           var symbolObj = {};
           symbolObj.symbol = symbol;
-          // console.log(symbolObj,'sosososo')
+
           symbolObj.chain = JSON.parse(body).options.option;
           // console.log(symbolObj);
           optionsArr.push(symbolObj)
@@ -45,7 +51,7 @@ router.get('/', function(req, res){
         })
       }
     }
-    var body = data[0].currentPortfolio[0].equities
+    var body = data.currentPortfolio.equities
     var portfolioSecurities;
     var requestObj
     var portfolioArr = []
@@ -59,7 +65,7 @@ router.get('/', function(req, res){
           Accept: 'application/json'
         }
       }
-      // console.log(requestObj);
+
       request(requestObj, function(error, response, body){
 
         var symbol = JSON.parse(body).options.option[0].root_symbol;
@@ -70,14 +76,17 @@ router.get('/', function(req, res){
         if(portfolioArr.length == length){
           updatedPortfolio.name = 'Andrew Sturick'
           updatedPortfolio.currentPortfolio.equities = portfolioArr;
-          // console.log(updatedPortfolio);
-          CurrentPortfolio.update({name:"Andrew Sturick"}, updatedPortfolio, function(err, response2){
-            res.send('done')
-          })
+
+
+          // Update data in firebase
+          portRef.set({updatedPortfolio})
+          res.send('done')
         }
       })
     })
-  })})
+  })
+
+})
 
 router.put('/', function(req, res){
   fs.readFile(req.body.file, 'utf8', function(err, data){
@@ -170,8 +179,11 @@ router.put('/', function(req, res){
           masterObj.currentPortfolio.options = optionsPositionsObject;
         }
       })
-      Portfolio.create(masterObj, function(err, portfolio){
-      })
+
+
+
+      userRef.child(keyID).set(masterObj)
+
   });
   res.send(req.body)
 })

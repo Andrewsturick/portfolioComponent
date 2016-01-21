@@ -29,7 +29,7 @@ function hitAPI(){
       console.log(body)
       hitAPI()
      })
-  }, 10000)
+  }, 3000)
 }
 hitAPI()
 app.listen(PORT);
