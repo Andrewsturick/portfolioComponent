@@ -8,7 +8,7 @@ var keyID = 'andrew'
 
 module.exports = {
   uploadPortfolio: function(req){
-    
+
     fs.readFile(req.file, 'utf8', function(err, data){
       var split = data.split('\n');
       var equities = {};
@@ -100,7 +100,6 @@ module.exports = {
         }
       })
       userRef.child(keyID).set(masterObj)
-
     });
   }
 }

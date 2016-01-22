@@ -4,9 +4,15 @@ var Firebase  = require('firebase')
 var userRef   = new Firebase('https://optionsjs.firebaseio.com/users')
 var portRef   = new Firebase('https://optionsjs.firebaseio.com/portfolio')
 
+var trackerHelper = require('./trackerHelpers.js')
+
+var YQL = require('yql')
 var request   = require('request')
 var async     = require('async')
 var keyID     = 'andrew'
+
+
+
 
 module.exports = {
   trackPortfolio: function(){
@@ -51,12 +57,28 @@ module.exports = {
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
+
+
+              //combines calls and puts to one Object (strike price line)
+              symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
               optionsArr.push(symbolObj)
               if(optionsArr.length == optionsLength){
                 optionsObj.name = 'Andrew Sturick'
                 optionsObj.currentPortfolio.options = optionsArr;
-                console.log('options', optionsObj)
-                cb(null, optionsObj)
+                var portfolioSymbolArray = optionsArr.map(function(position){
+                  return '"'  + position.symbol + '"'
+                })
+
+
+                var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
+
+                query.exec(function(err, data){
+                  data.query.results.quote.map(function(quote, index, array){
+                     optionsObj.currentPortfolio.options[index]['currentQuote']  = quote;
+                  })
+                  cb(null, optionsObj)
+                })
+                // console.log('options', optionsObj)
               }
             })
           }
@@ -83,23 +105,37 @@ module.exports = {
                 Accept: 'application/json'
               }
             }
-            request(requestObj, function(error, response, body){
 
+            request(requestObj, function(error, response, body){
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
+              symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
+
               portfolioArr.push(symbolObj)
               if(portfolioArr.length == length){
                 equitiesObj.name = 'Andrew Sturick'
                 equitiesObj.currentPortfolio.equities = portfolioArr;
-                console.log('equities', equitiesObj)
-                cb(null, equitiesObj)
+
+                var portfolioSymbolArray = portfolioArr.map(function(position){
+                  return '"'  + position.symbol + '"'
+                })
+
+
+                var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
+
+                query.exec(function(err, data){
+                  data.query.results.quote.map(function(quote, index, array){
+                     equitiesObj.currentPortfolio.equities[index]['currentQuote']  = quote;
+                  })
+                  cb(null, equitiesObj)
+                })
               }
             })
           })
         }
       }
     })
-}
+  }
 }
