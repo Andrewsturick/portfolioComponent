@@ -29,7 +29,7 @@ module.exports = {
         }
       ],
       function(err, updatedPortfolio){
-        console.log("PORTFOLIOOOOOOOOOOOOOOO", updatedPortfolio[1])
+        // console.log("PORTFOLIOOOOOOOOOOOOOOO", updatedPortfolio[1])
         portRef.set({
           options: updatedPortfolio[0],
           equities: updatedPortfolio[1]
@@ -37,7 +37,7 @@ module.exports = {
       })
 
       function options(data, cb){
-        console.log(data)
+        // console.log(data)
         var counter = 0;
         if(data.currentPortfolio.options){
           var optionsObj = {}
@@ -51,8 +51,9 @@ module.exports = {
                 Accept: 'application/json'
               }
             }
+            console.log(requestObj);
             request(requestObj, function(error, response, body){
-
+              // console.log(body)
               counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
@@ -73,7 +74,6 @@ module.exports = {
                 var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
                 query.exec(function(err, data){
                   data.query.results.quote.map(function(quote, index, array){
-                    // console.log(quote,'/////////////////////////////////////////////////')
                      optionsObj[quote.Symbol]['currentQuote']  = quote;
                   })
                 cb(null, optionsObj)
@@ -106,44 +106,35 @@ module.exports = {
             }
 
             request(requestObj, function(error, response, body){
-              console.log(body)
               counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
-// <<<<<<< HEAD
-//               symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
-//
-//               portfolioArr.push(symbolObj)
-//               if(portfolioArr.length == length){
-//                 equitiesObj.name = 'Andrew Sturick'
-//                 equitiesObj.currentPortfolio.equities = portfolioArr;
-//
-//                 var portfolioSymbolArray = portfolioArr.map(function(position){
-//                   return '"'  + position.symbol + '"'
-//                 })
-//
-//
-//                 var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
-//
-//                 query.exec(function(err, data){
-//                   data.query.results.quote.map(function(quote, index, array){
-//                      equitiesObj.currentPortfolio.equities[index]['currentQuote']  = quote;
-//                   })
-//                   cb(null, equitiesObj)
-//                 })
-// =======
+              symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
               equitiesObj[symbol] = symbolObj
 
+
+
               if(counter == equitiesLength){
-                cb(null, equitiesObj)
-// >>>>>>> 21c098def7b18dffa05017a61dfb693be549c682
-              }
-            })
+                var portfolioSymbolArray =[];
+                for ( var position in equitiesObj){
+                  // console.log(position);
+                   portfolioSymbolArray.push( '"'  + position + '"')
+                 }
+                var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
+                query.exec(function(err, data){
+                  // console.log(data.query.results.quote.length)
+                  data.query.results.quote.map(function(quote, index, array){
+                    equitiesObj[quote.Symbol]['currentQuote']  = quote;
+                  })
+                  cb(null, equitiesObj)
+              })
+
           }
-        }
+        })
+
       }
-    })
-  }
-}
+    }
+  }})
+}}
