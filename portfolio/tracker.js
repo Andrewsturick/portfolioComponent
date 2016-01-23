@@ -9,7 +9,7 @@ var trackerHelper = require('./trackerHelpers.js')
 var YQL = require('yql')
 var request   = require('request')
 var async     = require('async')
-var keyID     = 'andrew'
+var keyID     = 'google:114353919215793249085'
 
 
 
@@ -29,18 +29,18 @@ module.exports = {
         }
       ],
       function(err, updatedPortfolio){
+        console.log("PORTFOLIOOOOOOOOOOOOOOO", updatedPortfolio[1])
         portRef.set({
-          options: updatedPortfolio[0].currentPortfolio.options,
-          equities: updatedPortfolio[1].currentPortfolio.equities
+          options: updatedPortfolio[0],
+          equities: updatedPortfolio[1]
         })
       })
 
       function options(data, cb){
+
+        var counter = 0;
         if(data.currentPortfolio.options){
           var optionsObj = {}
-          optionsObj.currentPortfolio = {}
-
-          var optionsArr = [];
           var optionsLength = Object.keys(data.currentPortfolio.options).length;
 
           for(var symbol in data.currentPortfolio.options){
@@ -53,51 +53,50 @@ module.exports = {
             }
             request(requestObj, function(error, response, body){
 
+              counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
 
 
+
               //combines calls and puts to one Object (strike price line)
               symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
-              optionsArr.push(symbolObj)
-              if(optionsArr.length == optionsLength){
-                optionsObj.name = 'Andrew Sturick'
-                optionsObj.currentPortfolio.options = optionsArr;
-                var portfolioSymbolArray = optionsArr.map(function(position){
-                  return '"'  + position.symbol + '"'
+              optionsObj[symbol] = symbolObj
+
+              if(counter == optionsLength) {
+                var portfolioSymbolArray =[];
+                for ( var position in optionsObj){
+                   portfolioSymbolArray.push( '"'  + position.symbol + '"')
                 })
-
-
                 var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
-
                 query.exec(function(err, data){
                   data.query.results.quote.map(function(quote, index, array){
-                     optionsObj.currentPortfolio.options[index]['currentQuote']  = quote;
+                    console.log(quote)
+                    //  optionsObj[quote.Symbol]['currentQuote']  = quote;
                   })
-                  cb(null, optionsObj)
-                })
-                // console.log('options', optionsObj)
-              }
+                cb(null, optionsObj)
+              })
             })
           }
         }
-      }
+      }}
 
       // 2
       function equities(data, cb){
+
+        var counter = 0;
         var equitiesObj = {}
         equitiesObj.currentPortfolio = {}
         if(data.currentPortfolio.equities){
+
+          var equitiesLength = Object.keys(data.currentPortfolio.equities).length;
           var body = data.currentPortfolio.equities
           var portfolioSecurities;
-          var requestObj
-          var portfolioArr = []
-          var length = body.length
 
-          body.map(function(security, index){
-            var symbol = security.Symbol.toUpperCase()
+          for(var security in body){
+            var symbol = body[security].Symbol.toUpperCase()
             var requestObj  = {
               url: 'https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + symbol +'&expiration=2016-02-19',
               headers: {
@@ -107,33 +106,42 @@ module.exports = {
             }
 
             request(requestObj, function(error, response, body){
+              console.log(body)
+              counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
-              symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
+// <<<<<<< HEAD
+//               symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
+//
+//               portfolioArr.push(symbolObj)
+//               if(portfolioArr.length == length){
+//                 equitiesObj.name = 'Andrew Sturick'
+//                 equitiesObj.currentPortfolio.equities = portfolioArr;
+//
+//                 var portfolioSymbolArray = portfolioArr.map(function(position){
+//                   return '"'  + position.symbol + '"'
+//                 })
+//
+//
+//                 var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
+//
+//                 query.exec(function(err, data){
+//                   data.query.results.quote.map(function(quote, index, array){
+//                      equitiesObj.currentPortfolio.equities[index]['currentQuote']  = quote;
+//                   })
+//                   cb(null, equitiesObj)
+//                 })
+// =======
+              equitiesObj[symbol] = symbolObj
 
-              portfolioArr.push(symbolObj)
-              if(portfolioArr.length == length){
-                equitiesObj.name = 'Andrew Sturick'
-                equitiesObj.currentPortfolio.equities = portfolioArr;
-
-                var portfolioSymbolArray = portfolioArr.map(function(position){
-                  return '"'  + position.symbol + '"'
-                })
-
-
-                var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
-
-                query.exec(function(err, data){
-                  data.query.results.quote.map(function(quote, index, array){
-                     equitiesObj.currentPortfolio.equities[index]['currentQuote']  = quote;
-                  })
-                  cb(null, equitiesObj)
-                })
+              if(counter == equitiesLength){
+                cb(null, equitiesObj)
+// >>>>>>> 21c098def7b18dffa05017a61dfb693be549c682
               }
             })
-          })
+          }
         }
       }
     })
