@@ -9,7 +9,7 @@ var upload = require('./portfolio/portfolioUpload')
 var app = express();
 
 var PORT = process.env.PORT || 3003;
-mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost/myPortfolioDirective')
+// mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost/myPortfolioDirective')
 
 
 app.use(morgan('dev'));

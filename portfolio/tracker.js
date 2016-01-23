@@ -37,7 +37,7 @@ module.exports = {
       })
 
       function options(data, cb){
-
+        console.log(data)
         var counter = 0;
         if(data.currentPortfolio.options){
           var optionsObj = {}
@@ -68,18 +68,18 @@ module.exports = {
               if(counter == optionsLength) {
                 var portfolioSymbolArray =[];
                 for ( var position in optionsObj){
-                   portfolioSymbolArray.push( '"'  + position.symbol + '"')
-                })
+                   portfolioSymbolArray.push( '"'  + position + '"')
+                }
                 var query     = new YQL('select * from yahoo.finance.quotes where symbol in (' + portfolioSymbolArray + ')');
                 query.exec(function(err, data){
                   data.query.results.quote.map(function(quote, index, array){
-                    console.log(quote)
-                    //  optionsObj[quote.Symbol]['currentQuote']  = quote;
+                    // console.log(quote,'/////////////////////////////////////////////////')
+                     optionsObj[quote.Symbol]['currentQuote']  = quote;
                   })
                 cb(null, optionsObj)
               })
-            })
-          }
+            }
+          })
         }
       }}
 
