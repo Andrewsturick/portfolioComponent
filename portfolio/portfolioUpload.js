@@ -41,6 +41,7 @@ module.exports = {
             for (position in equities){
               var thisPosition  = {}
               for (header in headers){
+                headers[header] = headers[header].replace(' ', '_')
                 if (headers[header]==='Mark Value'){continue}
                 else{
                   thisPosition[headers[header]] = equities[position][header]
@@ -51,7 +52,7 @@ module.exports = {
 
             masterObj = {}
             masterObj.equities = {};
-            masterObj.equities=myPortfolio
+            masterObj.equities = myPortfolio
           }
 
           if(line ==="Options"){
@@ -75,6 +76,7 @@ module.exports = {
                       var thisLine = arr[optionsLine].split(',')
                       var thisPosition = {};
                       for(header in headers){
+                        headers[header] = headers[header].replace(' ', '_')
                         if(headers[header]!='Mark Value')
                         thisPosition[headers[header]] = thisLine[header]
                       }

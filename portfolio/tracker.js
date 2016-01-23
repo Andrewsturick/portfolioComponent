@@ -6,13 +6,10 @@ var portRef   = new Firebase('https://optionsjs.firebaseio.com/portfolio')
 
 var trackerHelper = require('./trackerHelpers.js')
 
-var YQL = require('yql')
+var YQL       = require('yql')
 var request   = require('request')
 var async     = require('async')
 var keyID     = 'google:114353919215793249085'
-
-
-
 
 module.exports = {
   trackPortfolio: function(){
@@ -59,8 +56,6 @@ module.exports = {
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
-
-
 
               //combines calls and puts to one Object (strike price line)
               symbolObj.chain = trackerHelper.combineOptionsAtSameStrikePrice(symbolObj.chain)
