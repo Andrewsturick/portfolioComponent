@@ -6,7 +6,8 @@ var position = require('../portfolio/portfolioUpload.js')
 var tracker = require('../portfolio/tracker.js')
 
 router.get('/', function(req, res){
-  // tracker.trackPortfolio()
+  // send user data from front
+  tracker.trackPortfolio()
   res.send("done")
 })
 

@@ -6,7 +6,7 @@ var portRef   = new Firebase('https://optionsjs.firebaseio.com/portfolio')
 
 var request   = require('request')
 var async     = require('async')
-var keyID     = 'andrew'
+var keyID     = 'google:114353919215793249085'
 
 module.exports = {
   trackPortfolio: function(){
@@ -23,18 +23,18 @@ module.exports = {
         }
       ],
       function(err, updatedPortfolio){
+        console.log("PORTFOLIOOOOOOOOOOOOOOO", updatedPortfolio[1])
         portRef.set({
-          options: updatedPortfolio[0].currentPortfolio.options,
-          equities: updatedPortfolio[1].currentPortfolio.equities
+          options: updatedPortfolio[0],
+          equities: updatedPortfolio[1]
         })
       })
 
       function options(data, cb){
+
+        var counter = 0;
         if(data.currentPortfolio.options){
           var optionsObj = {}
-          optionsObj.currentPortfolio = {}
-
-          var optionsArr = [];
           var optionsLength = Object.keys(data.currentPortfolio.options).length;
 
           for(var symbol in data.currentPortfolio.options){
@@ -47,15 +47,14 @@ module.exports = {
             }
             request(requestObj, function(error, response, body){
 
+              counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
-              optionsArr.push(symbolObj)
-              if(optionsArr.length == optionsLength){
-                optionsObj.name = 'Andrew Sturick'
-                optionsObj.currentPortfolio.options = optionsArr;
-                console.log('options', optionsObj)
+              optionsObj[symbol] = symbolObj
+
+              if(counter == optionsLength) {
                 cb(null, optionsObj)
               }
             })
@@ -65,17 +64,18 @@ module.exports = {
 
       // 2
       function equities(data, cb){
+
+        var counter = 0;
         var equitiesObj = {}
         equitiesObj.currentPortfolio = {}
         if(data.currentPortfolio.equities){
+
+          var equitiesLength = Object.keys(data.currentPortfolio.equities).length;
           var body = data.currentPortfolio.equities
           var portfolioSecurities;
-          var requestObj
-          var portfolioArr = []
-          var length = body.length
 
-          body.map(function(security, index){
-            var symbol = security.Symbol.toUpperCase()
+          for(var security in body){
+            var symbol = body[security].Symbol.toUpperCase()
             var requestObj  = {
               url: 'https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + symbol +'&expiration=2016-02-19',
               headers: {
@@ -84,20 +84,19 @@ module.exports = {
               }
             }
             request(requestObj, function(error, response, body){
-
+              console.log(body)
+              counter += 1
               var symbol = JSON.parse(body).options.option[0].root_symbol;
               var symbolObj = {};
               symbolObj.symbol = symbol;
               symbolObj.chain = JSON.parse(body).options.option;
-              portfolioArr.push(symbolObj)
-              if(portfolioArr.length == length){
-                equitiesObj.name = 'Andrew Sturick'
-                equitiesObj.currentPortfolio.equities = portfolioArr;
-                console.log('equities', equitiesObj)
+              equitiesObj[symbol] = symbolObj
+
+              if(counter == equitiesLength){
                 cb(null, equitiesObj)
               }
             })
-          })
+          }
         }
       }
     })
