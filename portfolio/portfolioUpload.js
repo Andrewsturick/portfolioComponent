@@ -1,15 +1,20 @@
 var Firebase = require('firebase')
 var userRef = new Firebase('https://optionsjs.firebaseio.com/users')
 var portRef = new Firebase('https://optionsjs.firebaseio.com/port')
+var csvRef = new Firebase('https://optionsjs.firebaseio.com/csvs')
 
-var fs = require('fs')
+
 var request = require('request')
-var keyID = 'andrew'
 
 module.exports = {
   uploadPortfolio: function(req){
-    
-    fs.readFile(req.file, 'utf8', function(err, data){
+
+    csvRef.on('child_added', function(snap){
+
+      var snap = snap.val()
+      var data = snap.csv
+      var keyID = snap.id
+
       var split = data.split('\n');
       var equities = {};
       var futures = {};
@@ -43,12 +48,9 @@ module.exports = {
             myPortfolio.push(thisPosition)
           }
 
-          masterObj.name = "Andrew Sturick"
-          masterObj.currentPortfolio = {}
-          masterObj.currentPortfolio.equities = {};
-          masterObj.currentPortfolio.equities=myPortfolio
-          // Portfolio.create(obj, function(err, portfolio){
-          // })
+          masterObj = {}
+          masterObj.equities = {};
+          masterObj.equities=myPortfolio
         }
 
         if(line ==="Options"){
@@ -90,17 +92,18 @@ module.exports = {
             }
             optionsPositionsObject[position.Symbol].positions.push(position)
           })
-          var  counter = 0
+          var counter = 0
           for(position in optionsPositionsObject){
             optionsPositionsObject[position].totalBP = totals[counter]
             counter++
           }
-          masterObj.currentPortfolio.options = {};
-          masterObj.currentPortfolio.options = optionsPositionsObject;
+          masterObj.options = {};
+          masterObj.options = optionsPositionsObject;
         }
       })
-      userRef.child(keyID).set(masterObj)
-
-    });
+      // remove the child from csv ref
+      userRef.child(keyID).update({currentPortfolio: masterObj})
+      csvRef.child(keyID).remove()
+    })
   }
 }
