@@ -25,10 +25,7 @@ app.get('/', function(req,res){
 
 function hitAPI(){
   setTimeout(function(){
-
     request(`http://localhost:${PORT}/portfolio`,function(error, response, body){
-      console.log(body)
-
       hitAPI()
      })
   }, 10000)
