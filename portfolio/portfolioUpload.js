@@ -80,14 +80,12 @@ module.exports = {
                         if(headers[header]!='Mark Value')
                         thisPosition[headers[header]] = thisLine[header]
                       }
-                      // console.log(thisPosition)
                       optionsPositions.push(thisPosition)
                     };
                   }
                 }
               }
             }
-            console.log('totalslog', totals)
             optionsPositions.map(function(position, i , arr){
               if(!optionsPositionsObject[position.Symbol]){
                 optionsPositionsObject[position.Symbol] = {};
@@ -104,7 +102,6 @@ module.exports = {
             masterObj.options = optionsPositionsObject;
           }
         })
-
         userRef.child(keyID).update({currentPortfolio: masterObj})
         csvRef.child(keyID).remove()
       }
