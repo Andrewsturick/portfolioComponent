@@ -30,6 +30,7 @@ function hitAPI(){
      })
   }, 10000)
 }
-hitAPI()
+// hitAPI()
 upload.uploadPortfolio();
 app.listen(PORT);
+console.log("listening on", PORT);
