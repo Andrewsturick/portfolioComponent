@@ -10,6 +10,8 @@ var YQL       = require('yql')
 var request   = require('request')
 var async     = require('async')
 var keyID     = 'google:114353919215793249085'
+var firebase  = require('firebase')
+var portRef   = new Firebase('https://optionsjs.firebaseio.com/portfolio')
 
 module.exports = {
   trackPortfolio: function(){
@@ -24,10 +26,17 @@ module.exports = {
         }
       ],
       function(err, updatedPortfolio){
-        portRef.set({
-          options      : updatedPortfolio[0],
-          equities     : updatedPortfolio[1]
+        var additions = []
+        updatedPortfolio.map(function(obj){
+          for(var stock in obj){
+            additions.push(obj[stock])
+          }
         })
+        additions.map(function(stock){
+          var stockRef = portRef.child(stock.symbol)
+          stockRef.set(stock)
+        })
+
       })
 
 

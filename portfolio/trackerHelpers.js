@@ -11,7 +11,6 @@ var combineOptionsAtSameStrikePrice = function(data){
   var strikeHolder = {};
 
   for(var line in data){
-    console.log(data[line], 'dldldldldldldldld')
     data[line].numberStrike       = data[line].strike;
     var str                       = data[line].strike;
     str                           = str.toString().replace('.', '@');
